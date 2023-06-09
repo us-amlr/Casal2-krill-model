@@ -1,2 +1,2 @@
 # Casal2-krill-model
-This repository contains an integrated, statistical model for Antarctic krill in the U.S. AMLR survey strata ((125,019 km2) of CCAMLR Subarea 48.1. The data and configuration files are in the 'config' folder.
+This repository contains an integrated, statistical model for Antarctic krill in the U.S. AMLR survey strata ((125,019 km2) of CCAMLR Subarea 48.1. The data and configuration files are in the 'config' folder. 'krill.e.txt' is the output from an MPD run of the Casal2 model using the input files in the 'config' folder. 'R_krill_figs.pdf' was rendered from the rmarkdown file 'R_krill_figs.rmd'.
