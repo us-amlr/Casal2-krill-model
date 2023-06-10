@@ -1,0 +1,356 @@
+---
+title: 'Casal2 krill modeling'
+author:
+  - Doug Kinzey, NOAA Southwest Fisheries Science Center
+date: "6/9/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Read Casal2 R libraries
+
+```{r set.paths}
+ R.libr.path <- 'c:/zot/Casal2/2023/R-Libraries/R/' 
+ # local path to R libraries for Casal2
+ mpd.path <- 'c:/zot/Casal2/2023/6jun/jun9_github/krill.e.txt' 
+ # AMLR biomass model outputs ('krill.e.txt')
+ nasc.path <- 'c:/zot/Casal2/2023/6jun/jun9_github/krill.nasc.txt' 
+ # AMLR NASC model outputs ('krill.nasc.txt')
+ output.path <- 'c:/zot/Casal2/2023/6jun/jun9_github/'
+
+ r.scrpts <- dir(R.libr.path)
+ for(i in 1:length(r.scrpts)) # read Casal2 R libraries
+   source(paste(R.libr.path,r.scrpts[i],sep=''))
+```
+# Extract Casal2 mpd outputs, create and set working directory
+
+```{r extract.files}
+krill.b <- extract.mpd(mpd.path)  # AMLR acoustic biomass model
+krill.n <- extract.mpd(nasc.path) # AMLR acoustic NASC model
+
+setwd(output.path)
+if(!dir.exists('krill_figs')){
+    dir.create('krill_figs')
+    }
+    
+setwd(paste(output.path,'krill_figs',sep=''))
+```
+
+# Figure 1: Krill catches
+```{r f1, ,fig.width=4.5,fig.height=4.55}
+Fig1 <- function(){
+par(cex=1.2)
+plot(krill.b$Instantaneous_Mortality$year,krill.b$Instantaneous_Mortality$`catch[K48.1]`, 
+  ylab = 'Catch (tonnes)',xlab = 'Year', main='krill catch',type='l',lwd=3
+  )
+}
+Fig1()
+```
+
+Figure 1. Krill catches from 1976 to 2021 for Subarea 48.1, and projected catches of 620,000 tonnes from 2022 to 2041 for the combined AMLR sampling strata.
+
+# Figure 2a: SSB, AMLR biomass surveys
+```{r fig2a,,fig.width=4.5,fig.height=4.5, fig.show="hold"}
+Fig2a <- function(){
+par(cex=1.2)
+y.lim <- c(0,max(krill.b$AMLRsrv$Values$observed / krill.b$AMLRsrv$Values$error_value,
+  krill.b$synop_biom$Values$observed / krill.b$synop_biom$Values$error_value,
+  krill.b$synop_biom$Values$observed * krill.b$synop_biom$Values$error_value,
+  krill.b$AMLRsrv$Values$expected / krill.b$AMLRsrv$Values$error_value,
+  krill.b$synop_biom$Values$expected / krill.b$synop_biom$Values$error_value,
+  krill.b$synop_biom$Values$expected * krill.b$synop_biom$Values$error_value))
+plot(1996:2021, krill.b$AMLRsrv$Values$expected[match(1996:2021,
+  krill.b$AMLRsrv$Values$year)],ylab='Survey biomass (tonnes)',xlab='Year',
+  main='observed 95% CI',type='l',lwd=5,ylim=y.lim,col='#95D840FF'
+  )
+points(1996:2021, krill.b$AMLRsrv$Values$observed[match(1996:2021,
+  krill.b$AMLRsrv$Values$year)],pch=19)
+lines(krill.b$FsrvBiomass$Values$year[match(1996:2021,krill.b$FsrvBiomass$Values$year)],
+  krill.b$FsrvBiomass$Values$expected[match(1996:2021,krill.b$FsrvBiomass$Values$year)],
+  col='#95D840FF',lwd=5)
+points(krill.b$FsrvBiomass$Values$year[match(1996:2021,krill.b$FsrvBiomass$Values$year)],
+  krill.b$FsrvBiomass$Values$observed[match(1996:2021,krill.b$FsrvBiomass$Values$year)]
+  ,pch=19)
+segments(
+  krill.b$AMLRsrv$Values$year, krill.b$AMLRsrv$Values$observed * 
+  krill.b$AMLRsrv$Values$error_value,
+  krill.b$AMLRsrv$Values$year, krill.b$AMLRsrv$Values$observed / 
+  krill.b$AMLRsrv$Values$error_value,
+  lwd=4)
+segments(
+  krill.b$FsrvBiomass$Values$year[match(1996:2021,krill.b$FsrvBiomass$Values$year)], 
+  krill.b$FsrvBiomass$Values$observed[match(1996:2021,krill.b$FsrvBiomass$Values$year)] * 
+  krill.b$FsrvBiomass$Values$error_value[match(1996:2021,krill.b$FsrvBiomass$Values$year)],
+  krill.b$FsrvBiomass$Values$year[match(1996:2021,krill.b$FsrvBiomass$Values$year)], 
+  krill.b$FsrvBiomass$Values$observed[match(1996:2021,krill.b$FsrvBiomass$Values$year)] / 
+  krill.b$FsrvBiomass$Values$error_value[match(1996:2021,krill.b$FsrvBiomass$Values$year)],
+  lwd=4)
+points(krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed,pch= 2,
+  col='#95D840FF',cex=1.5,lwd=4)
+segments(
+  krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed * 
+  krill.b$synop_biom$Values$error_value,
+  krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed / 
+  krill.b$synop_biom$Values$error_value,
+  col='#95D840FF',lwd=5,lty=2
+  )
+}
+Fig2a()
+```
+
+Figure 2. (A) Observed acoustic survey biomasses from U. S. AMLR (1996 to 2011) and fishery surveys (2014-2016, 2018-2020). Dark points represent annual mean biomasses with vertical dark line segments representing 95% lognormal CIs (WG-EMM-2021-05r1). Green horizontal lines are the fitted values to the data. Green triangles and dashed vertical lines in 2000 and 2019 represent mean biomasses with 95% lognormal CIs for the synoptic surveys. (B) Observed U. S. AMLR acoustic survey (1996 to 2011) NASC attributed to krill. Fisheries and synoptic survey values remain as biomass.
+
+# Figure 2b
+```{r fig2b, fig.width=4.5,fig.height=4.5}
+Fig2b <- function(){
+par(cex=1.2)
+y.lim <- c(0,max(krill.n$AMLRsrv$Values$observed / krill.n$AMLRsrv$Values$error_value,
+  krill.n$synop_biom$Values$observed / krill.n$synop_biom$Values$error_value,
+  krill.n$synop_biom$Values$observed * krill.n$synop_biom$Values$error_value,
+  krill.n$AMLRsrv$Values$expected / krill.n$AMLRsrv$Values$error_value,
+  krill.n$synop_biom$Values$expected / krill.n$synop_biom$Values$error_value,
+  krill.n$synop_biom$Values$expected * krill.n$synop_biom$Values$error_value))
+plot(1996:2021, krill.n$AMLRsrv$Values$expected[match(1996:2021,
+  krill.n$AMLRsrv$Values$year)],ylab='Survey biomass (tonnes)',xlab='Year',
+  main='observed 95% CI',type='l',lwd=5,ylim=y.lim,col='#95D840FF'
+  )
+points(1996:2021, krill.n$AMLRsrv$Values$observed[match(1996:2021,
+  krill.n$AMLRsrv$Values$year)],pch=19)
+lines(krill.n$FsrvBiomass$Values$year[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  krill.n$FsrvBiomass$Values$expected[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  col='#95D840FF',lwd=5)
+points(krill.n$FsrvBiomass$Values$year[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  krill.n$FsrvBiomass$Values$observed[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  pch=19)
+segments(
+  krill.n$AMLRsrv$Values$year, krill.n$AMLRsrv$Values$observed * 
+  krill.n$AMLRsrv$Values$error_value,
+  krill.n$AMLRsrv$Values$year, krill.n$AMLRsrv$Values$observed / 
+  krill.n$AMLRsrv$Values$error_value,lwd=4)
+segments(
+  krill.n$FsrvBiomass$Values$year[match(1996:2021,krill.n$FsrvBiomass$Values$year)], 
+  krill.n$FsrvBiomass$Values$observed[match(1996:2021,krill.n$FsrvBiomass$Values$year)] * 
+  krill.n$FsrvBiomass$Values$error_value[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  krill.n$FsrvBiomass$Values$year[match(1996:2021,krill.n$FsrvBiomass$Values$year)], 
+  krill.n$FsrvBiomass$Values$observed[match(1996:2021,krill.n$FsrvBiomass$Values$year)] / 
+  krill.n$FsrvBiomass$Values$error_value[match(1996:2021,krill.n$FsrvBiomass$Values$year)],
+  lwd=4)
+points(krill.n$synop_biom$Values$year,krill.n$synop_biom$Values$observed,pch= 2,
+  col='#95D840FF',cex=1.5,lwd=4)
+segments(
+  krill.n$synop_biom$Values$year,krill.n$synop_biom$Values$observed * 
+  krill.n$synop_biom$Values$error_value,
+  krill.n$synop_biom$Values$year,krill.n$synop_biom$Values$observed / 
+  krill.n$synop_biom$Values$error_value,
+  col='#95D840FF',lwd=5,lty=2
+  )
+}
+Fig2b()
+```
+
+
+# Order length-frequency datasets by year for Figures 3-5
+```{r fig3-5_order}
+df <- krill.b$ProportionAtLength_Fshry$Values[order(
+  krill.b$ProportionAtLength_Fshry$Values[,'length'],
+  krill.b$ProportionAtLength_Fshry$Values[,'year']),]
+dfAMLR <- krill.b$ProportionAtLength_trawl$Values[order(
+  krill.b$ProportionAtLength_trawl$Values[,'length'],
+  krill.b$ProportionAtLength_trawl$Values[,'year']),]
+dfGerman <- krill.b$ProportionAtLength_German$Values[order(
+  krill.b$ProportionAtLength_German$Values[,'length'],
+  krill.b$ProportionAtLength_German$Values[,'year']),]
+```
+
+# Figure 3a
+```{r fig3a,,fig.width=5,fig.height=5, fig.show="hold"}
+Fig3a <- function(){
+par(cex=1.2)
+plot(dfAMLR$year,as.numeric(as.character(dfAMLR$length)),cex=dfAMLR$observed*10,pch=19,
+     col=ifelse(dfAMLR$observed>0,'black','white'),
+     main= 'AMLR observed length frequencies',
+     ylim=c(0,64),ylab= 'length (proportion X 10)', xlab= 'Year')
+}
+Fig3a()
+```
+
+Figure 3. (A) Observed length-frequencies from AMLR surveys from 1992 to 2011. (B) Casal2 fitted length-frequencies. The fitted frequencies are for the mean lengths-at-age from the von Bertalanffy growth curve for ages one to six each year.
+
+# Figure 3b
+```{r fig3b,,fig.width=5,fig.height=5}
+Fig3b <- function(){
+par(cex=1.2)
+plot(dfAMLR$year,as.numeric(as.character(dfAMLR$length)),cex=dfAMLR$expected*10,pch=19,
+     col=ifelse(dfAMLR$expected>0,'black','white'),
+     main= 'AMLR fitted length frequencies',
+     ylim=c(0,64),ylab= 'mean length-at-age (proportion X 10)', xlab= 'Year')
+}
+Fig3b()
+```
+
+Figure 4. (A) Observed length-frequencies from the observer database for fishery surveys from 2014 to 2016 and 2018 to 2020. (B) Casal2 fitted length-frequencies. The fitted frequencies are from the von Bertalanffy growth curve as in Figure 2.
+
+# Figure 4a fishery observed lfs
+```{r fig4a,,fig.width=5,fig.height=5, fig.show="hold"}
+Fig4a <- function(){
+par(cex=1.2)
+plot(df$year,as.numeric(as.character(df$length)),cex=df$observed*10,pch=19,
+     col=ifelse(df$observed>0,'black','white'),
+     main= 'Fishery observed length frequencies',
+     ylim=c(0,64),ylab= 'length (proportion X 10)', xlab= 'Year')
+}
+Fig4a()
+```
+
+
+# Figure 4b Fishery fitted lfs
+```{r fig4b,,fig.width=5,fig.height=5}
+Fig4b <- function(){
+par(cex=1.2)
+plot(df$year,as.numeric(as.character(df$length)),cex=df$expected*10,pch=19,
+     col=ifelse(df$expected>0,'black','white'),
+     main= 'Fishery fitted length frequencies',
+     ylim=c(0,64),ylab= 'mean length-at-age (proportion X 10)', xlab= 'Year')
+}
+Fig4b()
+```
+
+# Figure 5a
+```{r fig5a,,fig.width=5,fig.height=5, fig.show="hold"}
+Fig5a <- function(){
+par(cex=1.2)
+plot(dfGerman$year,as.numeric(as.character(dfGerman$length)),cex=dfGerman$observed*10,
+  pch=19,col=ifelse(dfGerman$observed>0,'black','white'),ylim=c(0,64),
+     main= 'German observed length frequencies',
+     ylab= 'Age (proportion X 10)', xlab= 'Year')
+}
+Fig5a()
+```
+
+Figure 5. (A) Observed length-frequencies from German research surveys in 1981, 1982, and 1984-1987. (B) Casal2 fitted length-frequencies. The fitted frequencies are from the von Bertalanffy growth curve as in Figure 2.
+
+# Figure 5b
+```{r fig5b,,fig.width=5,fig.height=5}
+Fig5b <- function(){
+par(cex=1.2)
+plot(dfGerman$year,as.numeric(as.character(dfGerman$length)),cex=dfGerman$expected*10,
+  pch=19,col=ifelse(dfGerman$expected>0,'black','white'),ylim=c(0,64),
+     main= 'German fitted length frequencies',
+     ylab= 'mean length-at-age (proportion X 10)', xlab= 'Year')
+}
+Fig5b()
+```
+
+# Figure 6 selectivities (AMLR biomass)
+```{r fig6,,fig.width=5.5,fig.height=5.5, fig.show="hold"}
+Fig6 <- function(){
+plot(names(krill.b$krillFSel$Values),krill.b$krillFSel$Values, 
+  main='Krill Selectivities (A<LR biomass)',xlab = 'Length (mm)',ylab = 'Length Selectivity',type='l',
+  lwd=3,col='#95D840FF')
+  lines(names(krill.b$trawlSel$Values),krill.b$trawlSel$Values,col='#404788FF',lwd=3,lty=1)
+  lines(names(krill.b$AMLR_Sel$Values),krill.b$AMLR_Sel$Values,col='#404788FF',lwd=3,lty=2)
+  lines(names(krill.b$FbiomSel$Values),krill.b$FbiomSel$Values,col='#95D840FF',lwd=3,lty=2)
+  legend(3,0.4,lty=c(1,1,2,2),col=c('#95D840FF','#404788FF','#404788FF','#95D840FF'),
+    c('Fishery_lfs','AMLR_lfs','AMLRacoustics','FisheryAcoustics'),lwd=3,cex=0.8)
+}
+Fig6()
+```
+
+Figure 6. Estimated selectivities for length-frequencies and acoustic survey data from AMLR and fisheries.
+
+# Figure 6 selectivities (AMLR NASC)
+```{r fig6nasc,,fig.width=5.5,fig.height=5.5}
+Fig6nasc <- function(){
+plot(names(krill.n$krillFSel$Values),krill.n$krillFSel$Values, 
+  main='Krill Selectivities (AMLR NASC)',xlab = 'Length (mm)',ylab = 'Length Selectivity',
+  type='l',lwd=3,col='#95D840FF')
+  lines(names(krill.n$trawlSel$Values),krill.n$trawlSel$Values,col='#404788FF',lwd=3,lty=1)
+  lines(names(krill.n$AMLR_Sel$Values),krill.n$AMLR_Sel$Values,col='#404788FF',lwd=3,lty=2)
+  lines(names(krill.n$FbiomSel$Values),krill.n$FbiomSel$Values,col='#95D840FF',lwd=3,lty=2)
+  legend(3,0.4,lty=c(1,1,2,2),col=c('#95D840FF','#404788FF','#404788FF','#95D840FF'),
+    c('Fishery_lfs','AMLR_lfs','AMLRacoustics','FisheryAcoustics'),lwd=3,cex=0.8)
+}
+Fig6nasc()
+```
+
+
+# Figure 7 recruits
+```{r fig7,,fig.width=5.5,fig.height=5.5, fig.show="hold"}
+Fig7 <- function(){
+par(cex=1.2)
+plot(krill.b$Recruitment$model_year,krill.b$Recruitment$recruits, 
+  ylab='Recruits',xlab='Year',main='Estimate',type='l',lwd=3,col='#95D840FF'
+  )
+lines(krill.n$Recruitment$model_year,krill.n$Recruitment$recruits,lwd=3,
+  lty=2,col='#404788FF')
+legend(1976,3.0e+13,c('Biomass','NASC'),lty=c(1,2),col=c('#95D840FF','#404788FF'),lwd=3,
+  cex=0.9)
+}
+Fig7()
+```
+
+Figure 7. Recruitment estimates for 1976-2041. Recruitment for 2022-2041 is assigned based on standardized recruitment multipliers estimated for 1992-2011.
+
+# Figure 8a spawning stock biomass with synoptic survey 95% CIs
+```{r fig8a,,fig.width=5,fig.height=5, fig.show="hold"}
+Fig8a <- function(){
+par(cex=1.2)
+y.lim <- c(0,max(c(krill.b$SSB$SSB$values,
+  krill.b$synop_biom$Values$observed * krill.b$synop_biom$Values$error_value,
+  krill.b$synop_biom$Values$observed / krill.b$synop_biom$Values$error_value)))
+plot(names(krill.b$SSB$SSB$values),krill.b$SSB$SSB$values, 
+  ylab='SSB',xlab='Year',main='Estimate',type='l',lwd=4,
+  ylim=y.lim
+  )
+points(krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed,
+  col='#95D840FF',lwd=4,pch=2)
+segments(
+  krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed * 
+  krill.b$synop_biom$Values$error_value,
+  krill.b$synop_biom$Values$year,krill.b$synop_biom$Values$observed / 
+  krill.b$synop_biom$Values$error_value,
+  col='#95D840FF',lwd=4
+  )
+abline(h= krill.b$SSB$SSB$`initialisation_phase[1]`,lty=2,lwd=4)
+}
+Fig8a()
+```
+
+Figure 8. (A) Spawning biomass estimates during 1992-2021 and projected for 2022-2041 (based on 620,000 tonnes annual catches) from the Casal2 model. Synoptic survey means (triangles) and 95% CIs (lines) are in green. Dashed line is unexploited spawning biomass. (B) Same spawning biomass estimates without synoptic survey scaling using AMLR biomass and NASC as model inputs. 
+
+# Figure 8b spawning stock biomass
+```{r fig8b,,fig.width=5,fig.height=5}
+Fig8b <- function(){
+par(cex=1.2)
+y.lim <- c(0,max(c(krill.b$SSB$SSB$values
+  )))
+plot(names(krill.b$SSB$SSB$values),krill.b$SSB$SSB$values,col='#95D840FF',
+  ylab='SSB',xlab='Year',main='Estimate',type='l',lwd=3,
+  ylim=y.lim
+  )
+lines(names(krill.n$SSB$SSB$values), krill.n$SSB$SSB$values,col='#404788FF',lwd=3,lty=2)
+abline(h= krill.b$SSB$SSB$`initialisation_phase[1]`,lty=2,lwd=2)
+legend(1977,1e+06,c('Biomass','NASC'),lty=c(1,2),col=c('#95D840FF','#404788FF'),lwd=3)
+}
+Fig8b()
+```
+
+
+# Figure 9 Fishing mortality
+```{r fig9,,fig.width=4.5,fig.height=4.5}
+Fig9 <- function(){
+par(cex=1.2)
+plot(krill.b$Instantaneous_Mortality$year,krill.b$Instantaneous_Mortality$
+  'exploitation_rate[K48.1]',ylab= 'Exploitation rate', xlab= 'Year', 
+   main = 'Estimate exploitation rate',type='l',lwd=3
+  )
+}
+Fig9()
+```
+
+Figure 9. Estimated annual exploitation rates with historical catches and with 620,000 tonnes/year future catches.
+
+
+
